@@ -3,7 +3,11 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-  workflow_dispatch:  # ручной запуск из вкладки Actions
+  workflow_dispatch:
+
+# Отключаем warning про Node 20 (опционально, можно убрать после июня 2026)
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
   contents: read
@@ -21,26 +25,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      # Явно используем Node 24
+      - name: Setup Node 24
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
+
+      # Отладка: проверим что файлы на месте
+      - name: Check files
+        run: |
+          ls -la
+          cat package.json | grep -A 5 '"scripts"'
 
       - name: Install dependencies
         run: npm ci
 
-      # Если используешь Vite (рекомендуется):
+      # Сборка с правильным base URL для GitHub Pages
       - name: Build
-        run: npm run build
         env:
+          # Для Vite (рекомендуется):
           VITE_BASE_URL: /${{ github.event.repository.name }}/
+          # Для Create React App (раскомментируй если нужно):
+          # PUBLIC_URL: /${{ github.event.repository.name }}/
+        run: npm run build
 
-      # Если используешь Create React App:
-      # - name: Build
-      #   run: npm run build
-      #   env:
-      #     PUBLIC_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+      # Отладка: проверим что создалась папка dist/build
+      - name: Check build output
+        run: |
+          ls -la dist 2>/dev/null || ls -la build 2>/dev/null || echo "Папка не найдена!"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -48,8 +61,10 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'  # для Vite
-          # path: './build'  # для CRA
+          # Для Vite:
+          path: './dist'
+          # Для Create React App раскомментируй:
+          # path: './build'
 
   deploy:
     environment:
@@ -61,3 +76,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        
