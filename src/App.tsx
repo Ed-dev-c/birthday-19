@@ -1,211 +1,223 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Heart, Sparkles, Cake, Flower } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
-interface EmojiData {
-  id: number;
-  char: string;
-  x: number;
-  y: number;
-  delay: number;
-}
+// Floating Emoji Component
+const FloatingEmoji = ({ emoji, delay, x, duration }: { emoji: string, delay: number, x: string, duration: number }) => (
+  <motion.div
+    initial={{ y: '110vh', opacity: 0 }}
+    animate={{ 
+      y: '-10vh', 
+      opacity: [0, 1, 1, 0],
+      x: [x, `${parseFloat(x) + (Math.random() * 10 - 5)}%`]
+    }}
+    transition={{ 
+      duration: duration, 
+      delay: delay, 
+      repeat: Infinity,
+      ease: "linear"
+    }}
+    className="fixed text-2xl z-0 pointer-events-none"
+    style={{ left: x }}
+  >
+    {emoji}
+  </motion.div>
+);
 
-const PhotoCard = ({ url, caption, emoji, tags = [] }: { url: string; caption: string; emoji: string; tags?: string[] }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
-      className="bg-white rounded-3xl p-6 shadow-xl border-4 border-pink-200 max-w-sm w-full mx-auto my-12"
-    >
-      <div className="aspect-[4/5] bg-pink-50 rounded-2xl mb-4 overflow-hidden border-2 border-pink-100 relative group">
-        <img
-          src={url}
-          alt="Moment"
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          onError={(e) => {
-            e.currentTarget.src = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=400"; // Fallback image
-          }}
-        />
-        <div className="absolute top-2 right-2 text-2xl">{emoji}</div>
-      </div>
-      <div className="text-center">
-        <p className="text-[#D147A3] font-medium text-lg leading-relaxed mb-4">
-          {caption}
-        </p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {tags.map((tag, i) => (
-            <span key={i} className="px-3 py-1 bg-pink-50 text-pink-500 rounded-full text-sm font-semibold border border-pink-100">
-              {tag}
-            </span>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-};
+const PhotoCard = ({ url, caption, emoji, index }: { url: string, caption: string, emoji: string, index: number }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 50 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-100px" }}
+    transition={{ duration: 0.8, delay: index * 0.2 }}
+    className="bg-white/80 backdrop-blur-md p-6 rounded-3xl shadow-xl border-4 border-pink-200 max-w-sm mx-auto mb-20 relative overflow-hidden group hover:scale-[1.02] transition-transform"
+  >
+    <div className="absolute top-2 right-2 text-3xl group-hover:rotate-12 transition-transform">
+      {emoji}
+    </div>
+    <div className="aspect-[3/4] rounded-2xl bg-pink-50 overflow-hidden border-2 border-pink-100 mb-4">
+      {/* Fallback image if user hasn't added photos yet */}
+      <img 
+        src={url} 
+        alt="Birthday Photo" 
+        className="w-full h-full object-cover"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = `https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=800&auto=format&fit=crop`;
+        }}
+      />
+    </div>
+    <p className="text-pink-600 font-medium text-center text-lg leading-relaxed">
+      {caption}
+    </p>
+    <div className="flex justify-center gap-2 mt-4 text-pink-400">
+      <Heart className="w-5 h-5 fill-current" />
+      <Flower className="w-5 h-5" />
+      <Sparkles className="w-5 h-5" />
+    </div>
+  </motion.div>
+);
 
-export default function App() {
-  const [emojis, setEmojis] = useState<EmojiData[]>([]);
+function App() {
+  const emojis = ['🌸', '✨', '🦋', '🌷', '🌻', '💐', '💖', '⭐', '🎈', '👑'];
+  const floatingElements = Array.from({ length: 25 }).map(() => ({
+    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+    delay: Math.random() * 20,
+    x: `${Math.random() * 100}%`,
+    duration: 15 + Math.random() * 15
+  }));
+
+  const photos = [
+    { 
+      url: "photo1.jpg", 
+      caption: "Твоя прекрасная улыбка освещает всё вокруг 💕", 
+      emoji: "💖" 
+    },
+    { 
+      url: "photo2.jpg", 
+      caption: "Каждый момент, проведённый с тобой — это подарок ✨", 
+      emoji: "🦋" 
+    },
+    { 
+      url: "photo3.jpg", 
+      caption: "Ты делаешь этот мир ярче и добрее одним своим присутствием 🌷", 
+      emoji: "🌟" 
+    }
+  ];
+
+  const handleConfetti = () => {
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#ff69b4', '#ff1493', '#ffc0cb']
+    });
+  };
 
   useEffect(() => {
-    const emojiList = ['🌸', '🌷', '🦋', '✨', '💖', '🌻', '🌺'];
-    const newEmojis = Array.from({ length: 25 }).map((_, i) => ({
-      id: i,
-      char: emojiList[Math.floor(Math.random() * emojiList.length)],
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      delay: Math.random() * 20,
-    }));
-    setEmojis(newEmojis);
+    handleConfetti();
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FFF0F5] font-sans selection:bg-pink-200 selection:text-pink-600 relative overflow-x-hidden">
-      {/* Background Floating Elements */}
-      {emojis.map((e) => (
-        <div
-          key={e.id}
-          className="fixed pointer-events-none text-2xl"
-          style={{ left: `${e.x}%`, top: `${e.y}%`, opacity: 0.4 }}
-        >
-          <motion.div
-            animate={{
-              y: [0, -40, 0],
-              x: [0, 20, 0],
-              rotate: [0, 10, -10, 0],
-            }}
-            transition={{
-              duration: 5 + Math.random() * 5,
-              repeat: Infinity,
-              delay: e.delay,
-            }}
-          >
-            {e.char}
-          </motion.div>
-        </div>
+    <div className="min-h-screen bg-[#fff0f5] overflow-x-hidden selection:bg-pink-300 selection:text-white font-sans">
+      {/* Floating Emojis Background */}
+      {floatingElements.map((el, i) => (
+        <FloatingEmoji key={i} {...el} />
       ))}
 
       {/* Hero Section */}
-      <section className="h-screen flex flex-col items-center justify-center text-center px-4 relative z-10">
+      <section className="min-h-screen flex flex-col items-center justify-center relative px-4">
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 100 }}
-          className="text-7xl mb-6"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1, type: "spring" }}
+          className="text-center z-10"
         >
-          👑
+          <motion.div
+            animate={{ y: [0, -20, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="text-8xl mb-6 inline-block"
+          >
+            👑
+          </motion.div>
+          <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-pink-600 mb-4 drop-shadow-sm">
+            С Днём Рождения!
+          </h1>
+          <p className="text-2xl md:text-3xl text-pink-600 font-medium mb-8">
+            Тебе уже 19! 🥳✨
+          </p>
+          
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="text-pink-400 font-light flex flex-col items-center gap-2"
+          >
+            <span>Листай вниз</span>
+            <span className="text-2xl">↓</span>
+          </motion.div>
         </motion.div>
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="text-5xl md:text-7xl font-bold text-[#E91E63] mb-4 drop-shadow-sm"
-        >
-          С Днём Рождения!
-        </motion.h1>
-        <motion.p
+      </section>
+
+      {/* Photo Gallery Section */}
+      <section className="py-20 px-4 relative">
+        <div className="max-w-4xl mx-auto">
+          {photos.map((photo, index) => (
+            <PhotoCard key={index} {...photo} index={index} />
+          ))}
+        </div>
+      </section>
+
+      {/* Final Message Section */}
+      <section className="min-h-screen flex items-center justify-center px-4 py-20">
+        <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="text-2xl md:text-3xl text-pink-600 font-medium flex items-center gap-2"
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="bg-white/90 backdrop-blur-lg p-10 md:p-16 rounded-[40px] shadow-2xl border-4 border-pink-100 max-w-2xl w-full text-center relative overflow-hidden"
         >
-          Тебе уже 19! <span className="text-3xl">🎉</span>
-        </motion.p>
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="mt-20 text-pink-400 text-lg flex flex-col items-center gap-2"
-        >
-          Листай вниз
-          <span className="text-2xl">↓</span>
-        </motion.div>
-      </section>
-
-      {/* Photos Section */}
-      <section className="max-w-4xl mx-auto px-4 py-20 relative z-10">
-        <PhotoCard
-          url="/photo1.jpg"
-          caption="Твоя прекрасная улыбка освещает всё вокруг 💕"
-          emoji="🌸"
-          tags={['#нежная', '#любимая']}
-        />
-        <PhotoCard
-          url="/photo2.jpg"
-          caption="Каждый момент с тобой наполнен волшебством и радостью ✨"
-          emoji="💖"
-          tags={['#счастье', '#вместе']}
-        />
-        <PhotoCard
-          url="/photo3.jpg"
-          caption="Твои глаза сияют ярче всех звёзд на этом небе ⭐"
-          emoji="🦋"
-          tags={['#сияй', '#лучшая']}
-        />
-      </section>
-
-      {/* Final Message Card */}
-      <section className="max-w-2xl mx-auto px-4 pb-40 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          className="bg-white rounded-[2rem] p-10 shadow-2xl border-4 border-pink-200 text-center"
-        >
-          <div className="flex justify-center gap-2 mb-6">
-            <motion.span animate={{ rotate: [0, 15, -15, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="text-3xl">💕</motion.span>
-            <motion.span animate={{ rotate: [0, -15, 15, 0] }} transition={{ repeat: Infinity, duration: 2, delay: 0.5 }} className="text-3xl">💝</motion.span>
-            <motion.span animate={{ rotate: [0, 15, -15, 0] }} transition={{ repeat: Infinity, duration: 2, delay: 1 }} className="text-3xl">💗</motion.span>
+          <div className="flex justify-center gap-4 mb-8">
+            <motion.span whileHover={{ scale: 1.2 }} className="text-4xl">💕</motion.span>
+            <motion.span whileHover={{ scale: 1.2 }} className="text-4xl">💖</motion.span>
+            <motion.span whileHover={{ scale: 1.2 }} className="text-4xl">💗</motion.span>
+            <motion.span whileHover={{ scale: 1.2 }} className="text-4xl">💓</motion.span>
+            <motion.span whileHover={{ scale: 1.2 }} className="text-4xl">💞</motion.span>
           </div>
 
-          <h2 className="text-4xl font-bold text-[#D147A3] mb-6">
+          <h2 className="text-4xl font-bold text-pink-600 mb-6">
             С 19-летием, любимая!
           </h2>
-          <p className="text-xl text-pink-600 mb-8 font-medium">
+          <p className="text-xl text-pink-500 mb-8 font-medium">
             Ты — моё солнышко! ☀️
           </p>
 
-          <p className="text-gray-600 leading-relaxed mb-10 text-lg italic">
-            "В этот особенный день я хочу сказать тебе самые тёплые слова. Ты делаешь этот мир красивее просто тем, что ты есть. Пусть твои 19 лет будут наполнены счастьем, любовью и невероятными приключениями!"
+          <p className="text-gray-600 text-lg leading-relaxed mb-10 text-pretty">
+            В этот особенный день я хочу сказать тебе самые тёплые слова. Ты делаешь этот мир красивее просто тем, что ты есть. Пусть твои 19 лет будут наполнены счастьем, любовью и невероятными приключениями!
           </p>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-12">
+          <div className="flex flex-wrap justify-center gap-3 mb-12">
             {[
-              { text: '🌟 Красивая', color: 'bg-yellow-50' },
-              { text: '❤️ Умная', color: 'bg-red-50' },
-              { text: '✨ Незабываемая', color: 'bg-purple-50' },
-              { text: '🦋 Единственная', color: 'bg-pink-50' },
-              { text: '🌹 Нежная', color: 'bg-orange-50' },
-              { text: '🌈 Яркая', color: 'bg-blue-50' },
+              { text: 'Красивая', emoji: '🌟', color: 'bg-pink-100 text-pink-600' },
+              { text: 'Умная', emoji: '💝', color: 'bg-rose-100 text-rose-600' },
+              { text: 'Незабываемая', emoji: '✨', color: 'bg-purple-100 text-purple-600' },
+              { text: 'Единственная', emoji: '🦋', color: 'bg-pink-100 text-pink-600' },
             ].map((tag, i) => (
-              <div key={i} className={`${tag.color} p-3 rounded-2xl text-gray-700 font-semibold text-sm shadow-sm`}>
-                {tag.text}
-              </div>
+              <span key={i} className={`${tag.color} px-4 py-2 rounded-full font-bold flex items-center gap-2 text-sm`}>
+                {tag.emoji} {tag.text}
+              </span>
             ))}
           </div>
 
-          <div className="bg-pink-100 rounded-3xl p-8 border-2 border-pink-200 relative overflow-hidden">
-            <motion.div
-              animate={{ rotate: [0, 5, -5, 0] }}
-              transition={{ repeat: Infinity, duration: 3 }}
-              className="text-6xl mb-4 relative z-10"
-            >
-              🎂
-            </motion.div>
-            <p className="text-2xl font-bold text-pink-600 relative z-10">Happy 19th Birthday!</p>
-          </div>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            onClick={handleConfetti}
+            className="bg-gradient-to-r from-pink-100 to-rose-100 p-8 rounded-3xl cursor-pointer border-2 border-pink-200"
+          >
+            <Cake className="w-16 h-16 mx-auto mb-4 text-pink-500" />
+            <span className="text-2xl font-black text-pink-600 block">Happy 19th Birthday!</span>
+          </motion.div>
 
-          <div className="mt-12 text-pink-500 font-medium">
+          <div className="mt-12 text-pink-400 font-medium">
             С любовью 💕
-            <div className="flex justify-center gap-2 mt-4 opacity-70">
-              🌸 🌺 🌻 🌷 🌹
+            <div className="flex justify-center gap-2 mt-2">
+               🌸 💐 🌻 🌷 🌹 🌺
             </div>
           </div>
         </motion.div>
       </section>
 
-      {/* Footer text */}
-      <footer className="py-10 text-center text-pink-300 text-sm italic relative z-10">
-        Создано с любовью специально для тебя ✨
-      </footer>
+      {/* Music Control Hint (Decorative) */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className="bg-pink-500 text-white p-4 rounded-full shadow-lg"
+          onClick={handleConfetti}
+        >
+          <Sparkles className="w-6 h-6" />
+        </motion.button>
+      </div>
     </div>
   );
 }
+
+export default App;
